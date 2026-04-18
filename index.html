@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽奖码展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
+            --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --card-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --border-radius: 18px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #1d1d1f 0%, #4a4a4f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 21px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* Config Panel */
+        .config-panel {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 48px;
+            margin-bottom: 48px;
+            transition: var(--transition);
+        }
+
+        .config-panel.hidden {
+            display: none;
+        }
+
+        .config-panel h2 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            letter-spacing: -0.01em;
+        }
+
+        .config-panel p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            font-size: 17px;
+        }
+
+        .textarea-wrapper {
+            margin-bottom: 24px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 20px;
+            border: 2px solid #e2e2e5;
+            border-radius: 14px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            transition: var(--transition);
+            background: var(--bg-primary);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+        }
+
+        textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            font-size: 17px;
+            font-weight: 500;
+            border: none;
+            border-radius: 980px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .status-bar {
+            margin-top: 20px;
+            padding: 16px 20px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            font-size: 15px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-bar .count {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Display Panel */
+        .display-panel {
+            transition: var(--transition);
+        }
+
+        .display-panel.hidden {
+            display: none;
+        }
+
+        .display-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .display-header h2 {
+            font-size: 40px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .refresh-btn {
+            padding: 12px 28px;
+            font-size: 15px;
+            font-weight: 500;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 980px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+
+        .refresh-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: 32px 28px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent) 0%, #00c6fb 100%);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .card-code {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            word-break: break-all;
+            background: linear-gradient(135deg, var(--text-primary) 0%, #4a4a4f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-index {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            padding: 4px 10px;
+            border-radius: 980px;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.15s; }
+        .card:nth-child(4) { animation-delay: 0.2s; }
+        .card:nth-child(5) { animation-delay: 0.25s; }
+        .card:nth-child(6) { animation-delay: 0.3s; }
+        .card:nth-child(7) { animation-delay: 0.35s; }
+        .card:nth-child(8) { animation-delay: 0.4s; }
+        .card:nth-child(9) { animation-delay: 0.45s; }
+        .card:nth-child(10) { animation-delay: 0.5s; }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid #e2e2e5;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            .header h1 {
+                font-size: 40px;
+            }
+
+            .header p {
+                font-size: 17px;
+            }
+
+            .config-panel {
+                padding: 32px 24px;
+            }
+
+            .config-panel h2 {
+                font-size: 26px;
+            }
+
+            .display-header h2 {
+                font-size: 32px;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>抽奖码展示</h1>
+            <p>优雅呈现，随机抽取</p>
+        </header>
+
+        <!-- Config Panel -->
+        <div class="config-panel" id="configPanel">
+            <h2>配置抽奖码</h2>
+            <p>请输入最多 50 个抽奖码，每行一个。配置完成后可隐藏此面板。</p>
+            
+            <div class="textarea-wrapper">
+                <textarea 
+                    id="codeInput" 
+                    placeholder="LOTTERY001&#10;LOTTERY002&#10;LOTTERY003&#10;..."
+                    maxlength="5000"
+                ></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="saveCodes()">
+                    保存并展示
+                </button>
+                <button class="btn btn-secondary" onclick="loadSample()">
+                    加载示例
+                </button>
+                <button class="btn btn-secondary" onclick="clearAll()">
+                    清空
+                </button>
+            </div>
+
+            <div class="status-bar">
+                <span>当前已输入 <span class="count" id="currentCount">0</span> 个抽奖码</span>
+                <span>最多支持 50 个</span>
+            </div>
+        </div>
+
+        <!-- Display Panel -->
+        <div class="display-panel hidden" id="displayPanel">
+            <div class="display-header">
+                <h2>当前展示</h2>
+                <button class="refresh-btn" onclick="refreshDisplay()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    随机刷新
+                </button>
+            </div>
+
+            <div class="cards-grid" id="cardsGrid">
+                <!-- Cards will be injected here -->
+            </div>
+
+            <div class="footer">
+                <p>共 <span id="totalCount">0</span> 个抽奖码 · 每页展示 10 个</p>
+            </div>
+        </div>
+
+        <!-- Show Config Button (when hidden) -->
+        <div class="button-group" id="showConfigBtn" style="display: none; justify-content: center; margin-top: 40px;">
+            <button class="btn btn-secondary" onclick="showConfig()">
+                重新配置
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let allCodes = [];
+        const MAX_CODES = 50;
+        const DISPLAY_COUNT = 10;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedCodes = localStorage.getItem('lotteryCodes');
+            if (savedCodes) {
+                allCodes = JSON.parse(savedCodes);
+                if (allCodes.length > 0) {
+                    document.getElementById('codeInput').value = allCodes.join('\n');
+                    updateCount();
+                }
+            }
+
+            const isConfigHidden = localStorage.getItem('configHidden');
+            if (isConfigHidden === 'true' && allCodes.length > 0) {
+                hideConfigPanel();
+            }
+        });
+
+        // Update count
+        document.getElementById('codeInput').addEventListener('input', updateCount);
+
+        function updateCount() {
+            const codes = getCodesFromInput();
+            document.getElementById('currentCount').textContent = codes.length;
+        }
+
+        function getCodesFromInput() {
+            const input = document.getElementById('codeInput').value.trim();
+            if (!input) return [];
+            return input.split('\n').map(code => code.trim()).filter(code => code.length > 0);
+        }
+
+        function loadSample() {
+            const sampleCodes = [];
+            for (let i = 1; i <= 50; i++) {
+                sampleCodes.push(`LOTTERY${String(i).padStart(3, '0')}`);
+            }
+            document.getElementById('codeInput').value = sampleCodes.join('\n');
+            updateCount();
+        }
+
+        function clearAll() {
+            document.getElementById('codeInput').value = '';
+            updateCount();
+            localStorage.removeItem('lotteryCodes');
+            localStorage.removeItem('configHidden');
+            allCodes = [];
+            document.getElementById('displayPanel').classList.add('hidden');
+            document.getElementById('showConfigBtn').style.display = 'none';
+            document.getElementById('configPanel').classList.remove('hidden');
+        }
+
+        function saveCodes() {
+            const codes = getCodesFromInput();
+            
+            if (codes.length === 0) {
+                alert('请输入至少一个抽奖码');
+                return;
+            }
+
+            if (codes.length > MAX_CODES) {
+                alert(`最多支持 ${MAX_CODES} 个抽奖码，当前已输入 ${codes.length} 个`);
+                return;
+            }
+
+            allCodes = codes;
+            localStorage.setItem('lotteryCodes', JSON.stringify(allCodes));
+            
+            hideConfigPanel();
+            refreshDisplay();
+        }
+
+        function hideConfigPanel() {
+            document.getElementById('configPanel').classList.add('hidden');
+            document.getElementById('displayPanel').classList.remove('hidden');
+            document.getElementById('showConfigBtn').style.display = 'flex';
+            localStorage.setItem('configHidden', 'true');
+        }
+
+        function showConfig() {
+            document.getElementById('configPanel').classList.remove('hidden');
+            document.getElementById('displayPanel').classList.add('hidden');
+            document.getElementById('showConfigBtn').style.display = 'none';
+            localStorage.setItem('configHidden', 'false');
+        }
+
+        function refreshDisplay() {
+            if (allCodes.length === 0) {
+                alert('请先配置抽奖码');
+                showConfig();
+                return;
+            }
+
+            const shuffled = [...allCodes].sort(() => Math.random() - 0.5);
+            const selected = shuffled.slice(0, DISPLAY_COUNT);
+
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = '';
+
+            selected.forEach((code, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-index">#${allCodes.indexOf(code) + 1}</div>
+                    <div class="card-label">抽奖码</div>
+                    <div class="card-code">${escapeHtml(code)}</div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('totalCount').textContent = allCodes.length;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 's') {
+                    e.preventDefault();
+                    saveCodes();
+                }
+                if (e.key === 'r' && !document.getElementById('configPanel').classList.contains('hidden') === false) {
+                    e.preventDefault();
+                    refreshDisplay();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
